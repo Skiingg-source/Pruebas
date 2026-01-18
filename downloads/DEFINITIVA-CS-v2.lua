@@ -1087,19 +1087,79 @@ function OthersMenu()
     elseif othersMenu == 10 then Bundle6Orbs()
     elseif othersMenu == 11 then Buranka_Britany()
     elseif othersMenu == 12 then ReadyFight()
-    elseif othersMenu == 13 then Mutants()   --> AGREGADO AQUÍ (Lógica)
+    elseif othersMenu == 13 then Mutants() 
     end
 end
+-- ==========================================
+-- FUNCIÓN NUEVA: DESBLOQUEAR CAJAS (PRINCIPAL)
+-- ==========================================
+function UnlockBoxes()
+    gg.setVisible(false)
+    gg.toast("📦 Buscando Cajas...")
+    
+    -- Limpieza inicial
+    gg.clearResults()
+    gg.searchNumber(":Allowed", gg.TYPE_BYTE)
+    gg.getResults(100000)
+    gg.editAll("0", gg.TYPE_BYTE)
+    gg.clearResults()
 
+    -- Lista de búsquedas de cajas (Optimizada)
+    local boxSearches = {
+        {search = "h28416E6E697665727361727932335F426F785F3235000000106D6174657269616C000000", type = gg.TYPE_BYTE, offset = 0xfffffffffffffff8},
+        {search = "h2C416E6E69766572736172795F323031395F426F785F3900106D6174657269616C000000", type = gg.TYPE_BYTE, offset = 0xfffffffffffff578},
+        {search = "1,986,289,960;1,601,465,957;1,701,601,635;1,918,985,326", type = gg.TYPE_DWORD, offset = 0xffffffffffffffbc},
+        {search = "1,836,605,296;1,650,422,625;1,650,423,919;6,649,196", type = gg.TYPE_DWORD, offset = 0xffffffffffffffbc},
+        {search = "1,836,605,296;1,650,422,625;1,734,309,999;1,852,138,866", type = gg.TYPE_DWORD, offset = 0xffffffffffffffbc},
+        {search = "1,836,605,296;1,650,422,625;1,918,859,375;25,701", type = gg.TYPE_DWORD, offset = 0xffffffffffffffbc},
+        {search = "1,852,727,596;1,919,252,073;2,037,539,187;2,020,565,599", type = gg.TYPE_DWORD, offset = 0xffffffffffffffc0},
+        {search = "1,839,605,296;1,650,422,625;1,650,423,919;6,649,196", type = gg.TYPE_DWORD, offset = 0xffffffffffffffbc},
+        {search = "1,839,605,296;1,650,422,625;1,734,309,999;1,852,138,866", type = gg.TYPE_DWORD, offset = 0xffffffffffffffbc},
+        {search = "1,839,605,296;1,650,422,625;1,918,859,375;25,701", type = gg.TYPE_DWORD, offset = 0xffffffffffffffbc}
+    }
+
+    local foundCount = 0
+    
+    for i, item in ipairs(boxSearches) do
+        gg.searchNumber(item.search, item.type)
+        local r = gg.getResults(100) -- Limitado para evitar crash
+        if #r > 0 then
+            local valuesToEdit = {}
+            for k = 1, #r do
+                local target = r[k].address + item.offset
+                table.insert(valuesToEdit, {address = target, flags = gg.TYPE_DWORD, value = 1})
+            end
+            gg.setValues(valuesToEdit)
+            foundCount = foundCount + #r
+        end
+        gg.clearResults()
+    end
+    
+    -- Limpieza Final
+    gg.searchNumber(":Allowed", gg.TYPE_BYTE)
+    gg.getResults(100000)
+    gg.editAll("0", gg.TYPE_BYTE)
+    gg.clearResults()
+    
+    gg.processResume()
+    gg.timeJump("5:0")
+    
+    if foundCount > 0 then
+        gg.toast("✅ Cajas Desbloqueadas")
+    else
+        gg.toast("⚠️ No se encontraron cajas activas en memoria")
+    end
+end
 while true do
     if gg.isVisible() and gg.isClickedUiButton() then
         local mainmenu = gg.choice({
             "Hackear el reactor (aplica el cambio)",
             "Cambiar el reactor (preparar)",
             "Otros",
-            "Cambiar Mutante (Individual)"  -- NUEVA OPCIÓN AÑADIDA
+            "Cambiar Mutante (Individual)",
+            "📦 Desbloquear Cajas"
         }, nil,
-        "MENU PRINCIPAL V2.0\n")
+        "MENU PRINCIPAL V3.0\n")
 
         if mainmenu == 1 then
             MutantReactor()
@@ -1107,10 +1167,11 @@ while true do
             ChangeReactorMenu()
         elseif mainmenu == 3 then
             OthersMenu()
-        elseif mainmenu == 4 then
-            -- Llamamos al nuevo menú
             MenuCambioIndividual()
+        elseif mainmenu == 5 then
+            UnlockBoxes()
         end
     end
     gg.sleep(100)
+
 end
